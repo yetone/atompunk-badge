@@ -5,9 +5,11 @@ Currently only supports the circleci.
 ### Example
 
 ```bash
+git clone https://github.com/yetone/atompunk-badge.git && cd atompunk-badge
+
 cargo run
 
-open http://localhost:8000/{vcs-type}/{username}/{project}?token={token}
+open http://localhost:8080/{vcs-type}/{username}/{project}?token={token}
 ```
 
 ### Badges
