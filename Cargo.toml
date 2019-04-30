@@ -5,7 +5,7 @@ authors = ["yetone <yetoneful@gmail.com>"]
 
 [dependencies]
 rocket = "*"
-rocket_contrib = "*"
+rocket_codegen = "*"
 reqwest = "*"
 serde = "*"
 serde_derive = "*"

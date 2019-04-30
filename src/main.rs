@@ -1,19 +1,20 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
-extern crate env_logger;
-#[macro_use]
-extern crate log;
 #[macro_use]
 extern crate rocket;
-extern crate rocket_contrib;
+extern crate rocket_codegen;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 
 use rocket::get;
 use rocket::request::Form;
-use rocket::response::Redirect;
-use rocket_contrib::serve::StaticFiles;
+use rocket::response::NamedFile;
+use rocket_codegen::routes;
+use std::path::Path;
 
 macro_rules! safe_unwrap {
     ($e:expr) => {
@@ -21,7 +22,7 @@ macro_rules! safe_unwrap {
             Ok(x) => x,
             Err(x) => {
                 error!("{:?}", x);
-                return Redirect::to("/assets/unknown.gif");
+                return None;
             }
         }
     };
@@ -43,7 +44,7 @@ fn fetch_badge(
     username: String,
     project: String,
     params: Option<Form<Params>>,
-) -> Redirect {
+) -> Option<NamedFile> {
     let url = if let Some(form) = params {
         format!(
             "https://circleci.com/api/v1.1/project/{}/{}/{}?circle-token={}",
@@ -63,16 +64,13 @@ fn fetch_badge(
     debug!("resps: {:#?}", resps);
 
     if resps.len() == 0 {
-        return Redirect::to("/assets/unknown.gif");
+        return None;
     }
 
-    Redirect::to(format!("/assets/{}.gif", resps[0].status))
+    NamedFile::open(Path::new(&format!("assets/{}.gif", resps[0].status))).ok()
 }
 
 fn main() {
     env_logger::init();
-    rocket::ignite()
-        .mount("/assets", StaticFiles::from("assets"))
-        .mount("/", routes![fetch_badge])
-        .launch();
+    rocket::ignite().mount("/", routes![fetch_badge]).launch();
 }
