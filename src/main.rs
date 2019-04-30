@@ -16,6 +16,18 @@ use rocket::response::NamedFile;
 use rocket_codegen::routes;
 use std::path::Path;
 
+macro_rules! safe_unwrap {
+    ($e:expr) => {
+        match $e {
+            Ok(x) => x,
+            Err(x) => {
+                error!("{:?}", x);
+                return None;
+            }
+        }
+    };
+}
+
 #[derive(FromForm)]
 struct Params {
     token: String,
@@ -47,7 +59,7 @@ fn fetch_badge(
 
     debug!("url: {}", url);
 
-    let resps: Vec<Resp> = reqwest::get(&url).unwrap().json().unwrap();
+    let resps: Vec<Resp> = safe_unwrap!(safe_unwrap!(reqwest::get(&url)).json());
 
     debug!("resps: {:#?}", resps);
 
