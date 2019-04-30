@@ -6,6 +6,9 @@ extern crate rocket_codegen;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 
 use rocket::get;
 use rocket::request::Form;
@@ -36,11 +39,11 @@ fn fetch_badge(
         format!("https://circleci.com/api/v1.1/project/{}/{}/{}", vcs, username, project)
     };
 
-    println!("url: {}", url);
+    debug!("url: {}", url);
 
     let resps: Vec<Resp> = reqwest::get(&url).unwrap().json().unwrap();
 
-    println!("resps: {:#?}", resps);
+    debug!("resps: {:#?}", resps);
 
     if resps.len() == 0 {
         return None;
@@ -50,5 +53,6 @@ fn fetch_badge(
 }
 
 fn main() {
+    env_logger::init();
     rocket::ignite().mount("/", routes![fetch_badge]).launch();
 }
