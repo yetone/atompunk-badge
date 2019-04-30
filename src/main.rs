@@ -13,8 +13,8 @@ extern crate env_logger;
 use rocket::get;
 use rocket::request::Form;
 use rocket::response::NamedFile;
-use std::path::Path;
 use rocket_codegen::routes;
+use std::path::Path;
 
 #[derive(FromForm)]
 struct Params {
@@ -31,12 +31,18 @@ fn fetch_badge(
     vcs: String,
     username: String,
     project: String,
-    params: Option<Form<Params>>) -> Option<NamedFile> {
-
+    params: Option<Form<Params>>,
+) -> Option<NamedFile> {
     let url = if let Some(form) = params {
-        format!("https://circleci.com/api/v1.1/project/{}/{}/{}?circle-token={}", vcs, username, project, form.token)
+        format!(
+            "https://circleci.com/api/v1.1/project/{}/{}/{}?circle-token={}",
+            vcs, username, project, form.token
+        )
     } else {
-        format!("https://circleci.com/api/v1.1/project/{}/{}/{}", vcs, username, project)
+        format!(
+            "https://circleci.com/api/v1.1/project/{}/{}/{}",
+            vcs, username, project
+        )
     };
 
     debug!("url: {}", url);
