@@ -1,20 +1,19 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
+extern crate env_logger;
+#[macro_use]
+extern crate log;
 #[macro_use]
 extern crate rocket;
-extern crate rocket_codegen;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
-#[macro_use]
-extern crate log;
-extern crate env_logger;
+
+use std::path::Path;
 
 use rocket::get;
 use rocket::request::Form;
 use rocket::response::NamedFile;
-use rocket_codegen::routes;
-use std::path::Path;
 
 macro_rules! safe_unwrap {
     ($e:expr) => {
