@@ -21,7 +21,7 @@ macro_rules! safe_unwrap {
             Ok(x) => x,
             Err(x) => {
                 error!("{:?}", x);
-                return None;
+                return NamedFile::open(Path::new("assets/unknown.gif")).ok();
             }
         }
     };
@@ -62,8 +62,8 @@ fn fetch_badge(
 
     debug!("resps: {:#?}", resps);
 
-    if resps.len() == 0 {
-        return None;
+    if resps.is_empty() {
+        return NamedFile::open(Path::new("assets/unknown.gif")).ok();
     }
 
     NamedFile::open(Path::new(&format!("assets/{}.gif", resps[0].status))).ok()
