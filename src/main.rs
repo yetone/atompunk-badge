@@ -9,19 +9,21 @@ extern crate rocket;
 extern crate serde_derive;
 extern crate serde_json;
 
-use std::path::Path;
+use std::fs::File;
+use std::io;
 
 use rocket::get;
+use rocket::http::ContentType;
 use rocket::request::Form;
-use rocket::response::NamedFile;
+use rocket::Response;
 
 macro_rules! safe_unwrap {
-    ($e:expr) => {
+    ($e:expr, $resp_builder:expr) => {
         match $e {
             Ok(x) => x,
             Err(x) => {
                 error!("{:?}", x);
-                return NamedFile::open(Path::new("assets/unknown.gif")).ok();
+                return Ok($resp_builder.sized_body(File::open("assets/unknown.gif")?).finalize());
             }
         }
     };
@@ -38,12 +40,12 @@ struct Resp {
 }
 
 #[get("/<vcs>/<username>/<project>?<params..>")]
-fn fetch_badge(
+fn fetch_badge<'a>(
     vcs: String,
     username: String,
     project: String,
     params: Option<Form<Params>>,
-) -> Option<NamedFile> {
+) -> io::Result<Response<'a>> {
     let url = if let Some(form) = params {
         format!(
             "https://circleci.com/api/v1.1/project/{}/{}/{}?circle-token={}",
@@ -58,15 +60,27 @@ fn fetch_badge(
 
     debug!("url: {}", url);
 
-    let resps: Vec<Resp> = safe_unwrap!(safe_unwrap!(reqwest::get(&url)).json());
+    let mut resp_builder = Response::build();
+
+    let resp_builder = resp_builder
+        .header(ContentType::GIF)
+        .raw_header("Cache-Control", "max-age=0, no-cache")
+        .raw_header("Pragma", "no-cache");
+
+    let resps: Vec<Resp> = safe_unwrap!(
+        safe_unwrap!(reqwest::get(&url), resp_builder).json(),
+        resp_builder
+    );
 
     debug!("resps: {:#?}", resps);
 
-    if resps.is_empty() {
-        return NamedFile::open(Path::new("assets/unknown.gif")).ok();
-    }
+    let resp_builder = if resps.is_empty() {
+        resp_builder.sized_body(File::open("assets/unknown.gif")?)
+    } else {
+        resp_builder.sized_body(File::open(&format!("assets/{}.gif", resps[0].status))?)
+    };
 
-    NamedFile::open(Path::new(&format!("assets/{}.gif", resps[0].status))).ok()
+    Ok(resp_builder.finalize())
 }
 
 fn main() {
